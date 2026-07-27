@@ -7,6 +7,7 @@ int main(void)
     // Initialize window
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, GAME_NAME);
     SetTargetFPS(FPS);
+    SetExitKey(0); // Disable default ESC-to-close behavior
     InitAudioDevice();
 
     // Initialize game
