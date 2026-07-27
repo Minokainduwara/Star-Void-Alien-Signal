@@ -44,7 +44,7 @@
 // Special weapon limits
 #define MAX_MISSILES        3
 #define MAX_LASER_BEAMS     2
-#define MAX_SOUNDWAVES      1
+#define MAX_SOUNDWAVES      4
 
 // ---------------------------------------------------------------------------
 // Enums

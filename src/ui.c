@@ -368,8 +368,8 @@ void UI_DrawHUD(void)
     DrawText(TextFormat("L:%d", g.player.laserBeams), 60, specialY + 15, 14, laserCol);
 
     Color soundCol = g.player.soundwaves > 0 ? (Color){200, 255, 100, 255} : (Color){100, 100, 100, 100};
-    if (g.player.selectedSpecial == SPECIAL_SOUNDWAVE) DrawRectangle(108, specialY + 14, 60, 18, (Color){200, 255, 100, 30});
-    DrawText(TextFormat("W:%d", g.player.soundwaves), 110, specialY + 15, 14, soundCol);
+    if (g.player.selectedSpecial == SPECIAL_SOUNDWAVE) DrawRectangle(108, specialY + 14, 70, 18, (Color){200, 255, 100, 30});
+    DrawText(TextFormat("W:%d/4", g.player.soundwaves), 110, specialY + 15, 14, soundCol);
 
     if (g.player.selectedSpecial != SPECIAL_NONE)
     {

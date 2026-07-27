@@ -316,6 +316,15 @@ void Game_Update(float dt)
 
         case GAME_STATE_PLAYING:
         {
+            // Number keys to select specific special weapon
+            if (IsKeyPressed(KEY_ONE) && g.player.missiles > 0)
+                g.player.selectedSpecial = SPECIAL_MISSILE;
+            if (IsKeyPressed(KEY_TWO) && g.player.laserBeams > 0)
+                g.player.selectedSpecial = SPECIAL_LASER;
+            if (IsKeyPressed(KEY_THREE) && g.player.soundwaves > 0)
+                g.player.selectedSpecial = SPECIAL_SOUNDWAVE;
+
+            // Q key cycles through available weapons
             if (IsKeyPressed(KEY_Q))
             {
                 if (g.player.missiles > 0 || g.player.laserBeams > 0 || g.player.soundwaves > 0)

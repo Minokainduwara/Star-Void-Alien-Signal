@@ -83,7 +83,7 @@ void Collision_CheckAll(void)
     {
         if (!g.bullets[i].active) continue;
         if (g.bullets[i].type != BULLET_PLAYER && g.bullets[i].type != BULLET_BEAM &&
-            g.bullets[i].type != BULLET_MISSILE) continue;
+            g.bullets[i].type != BULLET_MISSILE && g.bullets[i].type != BULLET_SOUNDWAVE) continue;
         if (g.bullets[i].damage <= 0) continue;
 
         for (int k = 0; k < MAX_BULLETS; k++)
@@ -225,13 +225,14 @@ void DealDamageToEnemy(Enemy *e, int damage, Bullet *bullet)
             for (int d = 0; d < 3; d++)
                 PowerUp_Spawn(e->pos, POWERUP_ENERGY);
         }
-        else if (g.wave.currentWave >= 3 && rand() % 100 < 8)
+        else if (g.wave.currentWave >= 3 && rand() % 100 < 15)
         {
-            // Rare special weapon drop from regular enemies (8% after wave 3)
-            int r = rand() % 3;
+            // Special weapon drop from regular enemies (15% after wave 3)
+            // Soundwaves are more common (50% chance), missiles and lasers 25% each
+            int r = rand() % 4;
             if (r == 0) PowerUp_Spawn(e->pos, POWERUP_MISSILE);
             else if (r == 1) PowerUp_Spawn(e->pos, POWERUP_LASER_BEAM);
-            else PowerUp_Spawn(e->pos, POWERUP_SOUNDWAVE);
+            else PowerUp_Spawn(e->pos, POWERUP_SOUNDWAVE); // 50% chance
         }
 
         // Guaranteed special drop every 5th wave
