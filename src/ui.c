@@ -591,16 +591,75 @@ void UI_DrawSettings(void)
 {
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 20, 230});
 
-    DrawCenteredText("SETTINGS", 50, 40, (Color){0, 200, 255, 255});
-    DrawCenteredText("(Coming Soon)", 100, 20, (Color){150, 150, 150, 200});
+    DrawCenteredText("SETTINGS", 40, 40, (Color){0, 200, 255, 255});
 
-    DrawCenteredText("Future settings will include:", 160, 16, (Color){200, 200, 200, 150});
-    DrawCenteredText("- Sound volume", 190, 14, (Color){150, 150, 150, 120});
-    DrawCenteredText("- Music volume", 210, 14, (Color){150, 150, 150, 120});
-    DrawCenteredText("- Touch control size", 230, 14, (Color){150, 150, 150, 120});
-    DrawCenteredText("- Graphics quality", 250, 14, (Color){150, 150, 150, 120});
+    Vector2 mouse = GetMousePosition();
+    Rectangle r;
 
-    DrawCenteredText("Press ESC or BACKSPACE to return", SCREEN_HEIGHT - 40, 14, (Color){150, 150, 150, 200});
+    int y = 100;
+    int spacing = 50;
+
+    // SFX Volume
+    DrawText("Sound Effects Volume", 150, y, 18, (Color){200, 200, 255, 200}); y += 30;
+    int sfxBarX = 150;
+    int sfxBarY = y;
+    int sfxBarW = 500;
+    int sfxBarH = 20;
+    DrawRectangle(sfxBarX, sfxBarY, sfxBarW, sfxBarH, (Color){50, 50, 50, 150});
+    DrawRectangle(sfxBarX, sfxBarY, (int)(sfxBarW * g.settings.sfxVolume), sfxBarH, (Color){0, 200, 255, 200});
+    DrawRectangleLines(sfxBarX, sfxBarY, sfxBarW, sfxBarH, (Color){0, 200, 255, 255});
+    char sfxText[32];
+    snprintf(sfxText, sizeof(sfxText), "%d%%", (int)(g.settings.sfxVolume * 100));
+    DrawText(sfxText, sfxBarX + sfxBarW + 20, sfxBarY, 16, WHITE);
+    y += spacing;
+
+    // Music Volume
+    DrawText("Music Volume", 150, y, 18, (Color){200, 200, 255, 200}); y += 30;
+    int musicBarX = 150;
+    int musicBarY = y;
+    int musicBarW = 500;
+    int musicBarH = 20;
+    DrawRectangle(musicBarX, musicBarY, musicBarW, musicBarH, (Color){50, 50, 50, 150});
+    DrawRectangle(musicBarX, musicBarY, (int)(musicBarW * g.settings.musicVolume), musicBarH, (Color){255, 200, 100, 200});
+    DrawRectangleLines(musicBarX, musicBarY, musicBarW, musicBarH, (Color){255, 200, 100, 255});
+    char musicText[32];
+    snprintf(musicText, sizeof(musicText), "%d%%", (int)(g.settings.musicVolume * 100));
+    DrawText(musicText, musicBarX + musicBarW + 20, musicBarY, 16, WHITE);
+    y += spacing;
+
+    // Touch Control Size
+    DrawText("Touch Control Size", 150, y, 18, (Color){200, 200, 255, 200}); y += 35;
+    const char *sizeNames[] = {"Small", "Medium", "Large"};
+    Color sizeColors[] = {{0, 200, 255, 255}, {0, 255, 200, 255}, {255, 200, 100, 255}};
+    for (int i = 0; i < 3; i++)
+    {
+        int btnX = 150 + i * 120;
+        bool selected = (g.settings.touchControlSize == i);
+        bool hover = CheckCollisionPointRec(mouse, (Rectangle){btnX, y, 100, 35});
+        Color col = selected ? sizeColors[i] : (Color){100, 100, 100, 150};
+        Color bg = hover ? (Color){col.r, col.g, col.b, 60} : (Color){col.r, col.g, col.b, 20};
+        DrawRectangleRounded((Rectangle){btnX, y, 100, 35}, 0.2f, 8, bg);
+        DrawRectangleRoundedLines((Rectangle){btnX, y, 100, 35}, 0.2f, 8, col);
+        int tw = MeasureText(sizeNames[i], 14);
+        DrawText(sizeNames[i], btnX + (100 - tw) / 2, y + 10, 14, col);
+
+        if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+            g.settings.touchControlSize = i;
+    }
+    y += spacing + 10;
+
+    // Reset Save Data
+    DrawNeonButton("Reset Save Data", 150, y, 200, 40, (Color){255, 100, 100, 255},
+        CheckCollisionPointRec(mouse, (Rectangle){150, y, 200, 40}), &r);
+    if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        Game_DeleteSave();
+        g.save.unlockedLevel = 1;
+        g.save.unlockedBossRush = false;
+        g.save.survivalSaveExists = false;
+    }
+
+    DrawCenteredText("Press ESC or BACKSPACE to return", SCREEN_HEIGHT - 30, 14, (Color){150, 150, 150, 200});
 }
 
 // ---------------------------------------------------------------------------

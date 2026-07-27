@@ -256,6 +256,12 @@ typedef struct {
     bool survivalSaveExists; // Whether survival save exists
 } SaveData;
 
+typedef struct {
+    float sfxVolume;        // 0.0 to 1.0
+    float musicVolume;      // 0.0 to 1.0
+    int touchControlSize;   // 0=Small, 1=Medium, 2=Large
+} Settings;
+
 // Persistent save for in-progress game
 typedef struct {
     bool valid;
@@ -312,6 +318,7 @@ typedef struct {
     int comboCount;
     SaveData save;
     GameSave gameSave;
+    Settings settings;
     Texture2D dummyTex;
 } GameData;
 

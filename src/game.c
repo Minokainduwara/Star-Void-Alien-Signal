@@ -33,6 +33,11 @@ void Game_Init(void)
     g.save.unlockedBossRush = false;
     g.save.survivalSaveExists = false;
 
+    // Initialize settings
+    g.settings.sfxVolume = 1.0f;
+    g.settings.musicVolume = 1.0f;
+    g.settings.touchControlSize = 1; // Medium
+
     InitSavePath();
 
     Player_Init(&g.player);
