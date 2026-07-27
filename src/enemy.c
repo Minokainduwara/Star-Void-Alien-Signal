@@ -15,13 +15,14 @@ void Enemy_Spawn(EnemyType type, Vector2 pos)
             e->phase = 0;
             e->tint = WHITE;
 
+            float dm = g.difficultyMult;
             switch (type)
             {
                 case ENEMY_SCOUT:
-                    e->hp = 15 + (int)(g.difficulty * 5);
+                    e->hp = (int)((15 + g.wave.difficulty * 5) * dm);
                     e->maxHp = e->hp;
                     e->radius = 10;
-                    e->vel = (Vector2){-200 - g.difficulty * 20, 0};
+                    e->vel = (Vector2){(-200 - g.wave.difficulty * 20) * dm, 0};
                     e->fireRate = 0;
                     e->scoreValue = 10;
                     e->hasShield = false;
@@ -29,10 +30,10 @@ void Enemy_Spawn(EnemyType type, Vector2 pos)
                     break;
 
                 case ENEMY_FIGHTER:
-                    e->hp = 30 + (int)(g.difficulty * 8);
+                    e->hp = (int)((30 + g.wave.difficulty * 8) * dm);
                     e->maxHp = e->hp;
                     e->radius = 14;
-                    e->vel = (Vector2){-150 - g.difficulty * 15, 0};
+                    e->vel = (Vector2){(-150 - g.wave.difficulty * 15) * dm, 0};
                     e->fireRate = 1.5f;
                     e->scoreValue = 20;
                     e->hasShield = false;
@@ -40,10 +41,10 @@ void Enemy_Spawn(EnemyType type, Vector2 pos)
                     break;
 
                 case ENEMY_HUNTER:
-                    e->hp = 25 + (int)(g.difficulty * 6);
+                    e->hp = (int)((25 + g.wave.difficulty * 6) * dm);
                     e->maxHp = e->hp;
                     e->radius = 12;
-                    e->vel = (Vector2){-120 - g.difficulty * 10, 0};
+                    e->vel = (Vector2){(-120 - g.wave.difficulty * 10) * dm, 0};
                     e->fireRate = 2.0f;
                     e->scoreValue = 30;
                     e->hasShield = false;
@@ -51,26 +52,26 @@ void Enemy_Spawn(EnemyType type, Vector2 pos)
                     break;
 
                 case ENEMY_SHIELD:
-                    e->hp = 50 + (int)(g.difficulty * 10);
+                    e->hp = (int)((50 + g.wave.difficulty * 10) * dm);
                     e->maxHp = e->hp;
                     e->radius = 16;
-                    e->vel = (Vector2){-100 - g.difficulty * 10, 0};
+                    e->vel = (Vector2){(-100 - g.wave.difficulty * 10) * dm, 0};
                     e->fireRate = 2.5f;
                     e->scoreValue = 40;
                     e->hasShield = true;
-                    e->shieldHP = 30 + g.difficulty * 5;
+                    e->shieldHP = (30 + g.wave.difficulty * 5) * dm;
                     e->tint = (Color){100, 200, 255, 255};
                     break;
 
                 case ENEMY_BOSS:
-                    e->hp = 200 + (int)(g.difficulty * 50);
+                    e->hp = (int)((200 + g.wave.difficulty * 50) * dm);
                     e->maxHp = e->hp;
                     e->radius = 30;
-                    e->vel = (Vector2){-60, 0};
+                    e->vel = (Vector2){-60 * dm, 0};
                     e->fireRate = 0.8f;
                     e->scoreValue = 200;
                     e->hasShield = true;
-                    e->shieldHP = 100 + g.difficulty * 20;
+                    e->shieldHP = (100 + g.wave.difficulty * 20) * dm;
                     e->tint = (Color){255, 50, 50, 255};
                     break;
             }

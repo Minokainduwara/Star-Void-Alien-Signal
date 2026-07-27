@@ -21,6 +21,12 @@ void Player_Init(Player *p)
     p->trailIndex = 0;
     for (int i = 0; i < 12; i++)
         p->trail[i].pos = p->pos;
+    // Special weapon ammo
+    p->missiles = 0;
+    p->laserBeams = 0;
+    p->soundwaves = 0;
+    p->selectedSpecial = SPECIAL_NONE;
+    p->specialFireTimer = 0;
 }
 
 void Player_Update(Player *p, float dt)
@@ -34,7 +40,7 @@ void Player_Update(Player *p, float dt)
     if (IsKeyDown(KEY_A) || IsKeyDown(KEY_LEFT))  moveDir.x -= 1;
     if (IsKeyDown(KEY_D) || IsKeyDown(KEY_RIGHT)) moveDir.x += 1;
 
-    // Touch/mouse movement (left half of screen)
+    // Touch/mouse movement (left 70% of screen)
     if (g.touchActive && g.touchPos.x < SCREEN_WIDTH * 0.7f)
     {
         Vector2 delta;
@@ -77,6 +83,8 @@ void Player_Update(Player *p, float dt)
     // Update fire timer
     if (p->fireTimer > 0)
         p->fireTimer -= dt;
+    if (p->specialFireTimer > 0)
+        p->specialFireTimer -= dt;
 
     // Update invincibility
     if (p->invincibleTimer > 0)
@@ -134,14 +142,13 @@ void Player_Draw(const Player *p)
 
     // Draw invincibility flash
     if (p->invincibleTimer > 0 && (int)(p->invincibleTimer * 10) % 2 == 0)
-        return; // Blink
+        return;
 
     // Draw ship (neon triangle)
     Vector2 tip = {p->pos.x + PLAYER_SIZE, p->pos.y};
     Vector2 left = {p->pos.x - PLAYER_SIZE * 0.6f, p->pos.y - PLAYER_SIZE * 0.7f};
     Vector2 right = {p->pos.x - PLAYER_SIZE * 0.6f, p->pos.y + PLAYER_SIZE * 0.7f};
 
-    // Main body
     DrawTriangle(tip, left, right, (Color){80, 180, 255, 255});
     DrawTriangleLines(tip, left, right, (Color){150, 220, 255, 255});
 
@@ -170,6 +177,11 @@ void Player_TakeDamage(Player *p, int damage)
     if (p->invincibleTimer > 0)
         return;
 
+    // Apply difficulty multiplier to damage taken
+    float dmgMult = g.difficultyMult;
+    damage = (int)(damage * dmgMult);
+    if (damage < 1) damage = 1;
+
     // Shield absorbs damage first
     if (p->shield > 0)
     {
@@ -192,7 +204,6 @@ void Player_TakeDamage(Player *p, int damage)
     p->invincibleTimer = 1.5f;
     g.screenShake = 5.0f;
 
-    // Spawn damage particles
     Particle_SpawnBurst(p->pos, 8, RED, 150.0f);
     Audio_PlayHit();
 }

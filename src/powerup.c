@@ -30,7 +30,7 @@ void PowerUp_Spawn(Vector2 pos, PowerUpType type)
                     break;
                 case POWERUP_SPEED_BOOST:
                     g.powerups[i].color = (Color){255, 255, 0, 255};
-                    g.powerups[i].value = 5; // seconds
+                    g.powerups[i].value = 5;
                     break;
                 case POWERUP_DRONE:
                     g.powerups[i].color = (Color){200, 0, 255, 255};
@@ -39,6 +39,21 @@ void PowerUp_Spawn(Vector2 pos, PowerUpType type)
                 case POWERUP_SPECIAL:
                     g.powerups[i].color = (Color){255, 50, 50, 255};
                     g.powerups[i].value = 1;
+                    break;
+                case POWERUP_MISSILE:
+                    g.powerups[i].color = (Color){255, 150, 50, 255};
+                    g.powerups[i].value = 1;
+                    g.powerups[i].radius = 10;
+                    break;
+                case POWERUP_LASER_BEAM:
+                    g.powerups[i].color = (Color){255, 50, 255, 255};
+                    g.powerups[i].value = 1;
+                    g.powerups[i].radius = 10;
+                    break;
+                case POWERUP_SOUNDWAVE:
+                    g.powerups[i].color = (Color){200, 255, 100, 255};
+                    g.powerups[i].value = 1;
+                    g.powerups[i].radius = 10;
                     break;
             }
             return;
@@ -81,14 +96,18 @@ void PowerUp_DrawAll(void)
         const char *icon = "";
         switch (p->type)
         {
-            case POWERUP_ENERGY: icon = "E"; break;
-            case POWERUP_HEALTH: icon = "+"; break;
-            case POWERUP_SHIELD: icon = "S"; break;
+            case POWERUP_ENERGY:    icon = "E"; break;
+            case POWERUP_HEALTH:    icon = "+"; break;
+            case POWERUP_SHIELD:    icon = "S"; break;
             case POWERUP_SPEED_BOOST: icon = ">"; break;
-            case POWERUP_DRONE: icon = "D"; break;
-            case POWERUP_SPECIAL: icon = "!"; break;
+            case POWERUP_DRONE:     icon = "D"; break;
+            case POWERUP_SPECIAL:   icon = "!"; break;
+            case POWERUP_MISSILE:   icon = "M"; break;
+            case POWERUP_LASER_BEAM: icon = "L"; break;
+            case POWERUP_SOUNDWAVE: icon = "W"; break;
         }
-        DrawText(icon, p->pos.x - 4, p->pos.y - 6, 10, BLACK);
+        Color txtColor = (p->type == POWERUP_MISSILE || p->type == POWERUP_LASER_BEAM || p->type == POWERUP_SOUNDWAVE) ? WHITE : BLACK;
+        DrawText(icon, p->pos.x - 4, p->pos.y - 6, 10, txtColor);
     }
 }
 
@@ -129,6 +148,22 @@ void PowerUp_Collect(Player *p, PowerUpType type)
             }
             g.screenShake = 10.0f;
             break;
+
+        case POWERUP_MISSILE:
+            p->missiles = (p->missiles + 1);
+            if (p->missiles > MAX_MISSILES) p->missiles = MAX_MISSILES;
+            p->selectedSpecial = SPECIAL_MISSILE;
+            break;
+        case POWERUP_LASER_BEAM:
+            p->laserBeams = (p->laserBeams + 1);
+            if (p->laserBeams > MAX_LASER_BEAMS) p->laserBeams = MAX_LASER_BEAMS;
+            p->selectedSpecial = SPECIAL_LASER;
+            break;
+        case POWERUP_SOUNDWAVE:
+            p->soundwaves = (p->soundwaves + 1);
+            if (p->soundwaves > MAX_SOUNDWAVES) p->soundwaves = MAX_SOUNDWAVES;
+            p->selectedSpecial = SPECIAL_SOUNDWAVE;
+            break;
     }
 }
 
@@ -136,12 +171,15 @@ const char* PowerUp_GetName(PowerUpType type)
 {
     switch (type)
     {
-        case POWERUP_ENERGY: return "Energy Crystal";
-        case POWERUP_HEALTH: return "Health Restore";
-        case POWERUP_SHIELD: return "Shield Boost";
+        case POWERUP_ENERGY:    return "Energy Crystal";
+        case POWERUP_HEALTH:    return "Health Restore";
+        case POWERUP_SHIELD:    return "Shield Boost";
         case POWERUP_SPEED_BOOST: return "Speed Boost";
-        case POWERUP_DRONE: return "Drone Companion";
-        case POWERUP_SPECIAL: return "Void Blast!";
-        default: return "Unknown";
+        case POWERUP_DRONE:     return "Drone Companion";
+        case POWERUP_SPECIAL:   return "Void Blast!";
+        case POWERUP_MISSILE:   return "Missile Ammo";
+        case POWERUP_LASER_BEAM: return "Laser Beam";
+        case POWERUP_SOUNDWAVE: return "Soundwave";
+        default:                return "Unknown";
     }
 }

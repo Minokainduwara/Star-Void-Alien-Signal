@@ -18,7 +18,7 @@
 #define MAX_BULLETS         128
 #define MAX_ENEMIES         64
 #define MAX_PARTICLES       512
-#define MAX_POWERUPS        16
+#define MAX_POWERUPS        24
 #define MAX_STARS           120
 #define MAX_WAVE_ENEMIES    20
 #define MAX_STORY_LINES     5
@@ -37,6 +37,11 @@
 #define PLAYER_SPEED        280.0f
 #define PLAYER_SIZE         18.0f
 #define PLAYER_FIRE_RATE    0.18f
+
+// Special weapon limits
+#define MAX_MISSILES        3
+#define MAX_LASER_BEAMS     2
+#define MAX_SOUNDWAVES      1
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -60,6 +65,13 @@ typedef enum {
 } WeaponLevel;
 
 typedef enum {
+    SPECIAL_NONE,
+    SPECIAL_MISSILE,
+    SPECIAL_LASER,
+    SPECIAL_SOUNDWAVE
+} SpecialWeaponType;
+
+typedef enum {
     ENEMY_SCOUT,
     ENEMY_FIGHTER,
     ENEMY_HUNTER,
@@ -73,13 +85,18 @@ typedef enum {
     POWERUP_SHIELD,
     POWERUP_SPEED_BOOST,
     POWERUP_DRONE,
-    POWERUP_SPECIAL
+    POWERUP_SPECIAL,
+    POWERUP_MISSILE,      // Special weapon ammo
+    POWERUP_LASER_BEAM,
+    POWERUP_SOUNDWAVE
 } PowerUpType;
 
 typedef enum {
     BULLET_PLAYER,
     BULLET_ENEMY,
-    BULLET_BEAM
+    BULLET_BEAM,
+    BULLET_MISSILE,
+    BULLET_SOUNDWAVE
 } BulletType;
 
 typedef enum {
@@ -87,6 +104,12 @@ typedef enum {
     GAME_MODE_SURVIVAL,
     GAME_MODE_BOSS_RUSH
 } GameMode;
+
+typedef enum {
+    DIFFICULTY_EASY,
+    DIFFICULTY_NORMAL,
+    DIFFICULTY_HARD
+} Difficulty;
 
 // ---------------------------------------------------------------------------
 // Structs
@@ -176,6 +199,12 @@ typedef struct {
     int lives;
     TrailPoint trail[12];
     int trailIndex;
+    // Special weapon ammo
+    int missiles;
+    int laserBeams;
+    int soundwaves;
+    SpecialWeaponType selectedSpecial;
+    float specialFireTimer;
 } Player;
 
 typedef struct {
@@ -224,6 +253,7 @@ typedef struct {
 typedef struct {
     GameState state;
     GameMode mode;
+    Difficulty difficulty;
     Player player;
     Bullet bullets[MAX_BULLETS];
     Enemy enemies[MAX_ENEMIES];
@@ -237,9 +267,10 @@ typedef struct {
     float storyTimer;
     float screenShake;
     float gameTime;
-    float difficulty;
+    float difficultyMult;    // Multiplier from difficulty selection
     Rectangle screenRect;
     bool firePressed;
+    bool specialFirePressed;
     Vector2 touchPos;
     bool touchActive;
     bool lastFrameTouchActive;
@@ -286,12 +317,15 @@ void Bullet_DrawAll(void);
 bool Collision_CircleCircle(Vector2 a, float ra, Vector2 b, float rb);
 bool Collision_CircleRect(Vector2 c, float r, Rectangle rect);
 void Collision_CheckAll(void);
+void DealDamageToEnemy(Enemy *e, int damage, Bullet *bullet);
 
 // weapon.c
 void Weapon_Fire(Player *p, Bullet *bullets, float dt);
+void Weapon_FireSpecial(Player *p);
 const char* Weapon_GetName(WeaponLevel wl);
 int Weapon_GetDamage(WeaponLevel wl);
 float Weapon_GetFireRate(WeaponLevel wl);
+const char* Weapon_GetSpecialName(SpecialWeaponType sw);
 
 // particles.c
 void Particle_Spawn(Vector2 pos, Vector2 vel, float radius, Color color, int lifetime, bool gravity);
@@ -319,6 +353,7 @@ void Audio_PlayPowerUp(void);
 void Audio_PlayBossWarning(void);
 void Audio_PlayLevelUp(void);
 void Audio_PlayGameOver(void);
+void Audio_PlaySpecial(void);
 void Audio_Shutdown(void);
 
 // ui.c

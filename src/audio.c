@@ -1,9 +1,5 @@
 #include "game.h"
 
-// Audio stubs using raylib's built-in sound generation
-// In a full production build, these would load .wav files
-// For now, we generate simple sine wave tones
-
 static Sound shootSnd;
 static Sound hitSnd;
 static Sound explosionSnd;
@@ -11,9 +7,9 @@ static Sound powerupSnd;
 static Sound bossWarningSnd;
 static Sound levelUpSnd;
 static Sound gameOverSnd;
+static Sound specialSnd;
 static bool audioReady = false;
 
-// Generate a simple sine wave sound
 static Sound GenerateTone(float frequency, float duration, float volume)
 {
     int sampleRate = 22050;
@@ -31,7 +27,6 @@ static Sound GenerateTone(float frequency, float duration, float volume)
     {
         float t = (float)i / sampleRate;
         float sample = sinf(2.0f * PI * frequency * t);
-        // Apply envelope (fade in/out)
         float envelope = 1.0f;
         float fadeLen = duration * 0.1f;
         if (t < fadeLen)
@@ -66,6 +61,7 @@ void Audio_Init(void)
     bossWarningSnd = GenerateTone(150.0f, 0.5f, 0.4f);
     levelUpSnd = GenerateTone(440.0f, 0.3f, 0.3f);
     gameOverSnd = GenerateTone(80.0f, 0.8f, 0.5f);
+    specialSnd = GenerateTone(1200.0f, 0.3f, 0.4f);
     audioReady = true;
 }
 
@@ -104,6 +100,11 @@ void Audio_PlayGameOver(void)
     if (audioReady) PlaySound(gameOverSnd);
 }
 
+void Audio_PlaySpecial(void)
+{
+    if (audioReady) PlaySound(specialSnd);
+}
+
 void Audio_Shutdown(void)
 {
     if (audioReady)
@@ -115,6 +116,7 @@ void Audio_Shutdown(void)
         UnloadSound(bossWarningSnd);
         UnloadSound(levelUpSnd);
         UnloadSound(gameOverSnd);
+        UnloadSound(specialSnd);
         audioReady = false;
     }
 }

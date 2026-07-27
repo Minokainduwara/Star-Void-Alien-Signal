@@ -5,7 +5,8 @@ void Game_Init(void)
     memset(&g, 0, sizeof(GameData));
     g.state = GAME_STATE_MENU;
     g.mode = GAME_MODE_CAMPAIGN;
-    g.difficulty = 1.0f;
+    g.difficulty = DIFFICULTY_NORMAL;
+    g.difficultyMult = 1.0f;
     g.screenRect = (Rectangle){0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
     Player_Init(&g.player);
@@ -71,6 +72,23 @@ void Game_Reset(void)
     Story_Init();
 }
 
+static void SetDifficulty(Difficulty d)
+{
+    g.difficulty = d;
+    switch (d)
+    {
+        case DIFFICULTY_EASY:
+            g.difficultyMult = 0.6f;
+            break;
+        case DIFFICULTY_NORMAL:
+            g.difficultyMult = 1.0f;
+            break;
+        case DIFFICULTY_HARD:
+            g.difficultyMult = 1.5f;
+            break;
+    }
+}
+
 void Game_Update(float dt)
 {
     g.gameTime += dt;
@@ -89,6 +107,14 @@ void Game_Update(float dt)
         {
             UI_HandleMenuInput();
 
+            // Difficulty selection via number keys
+            if (IsKeyPressed(KEY_ONE))
+                SetDifficulty(DIFFICULTY_EASY);
+            if (IsKeyPressed(KEY_TWO))
+                SetDifficulty(DIFFICULTY_NORMAL);
+            if (IsKeyPressed(KEY_THREE))
+                SetDifficulty(DIFFICULTY_HARD);
+
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
             {
                 Game_Reset();
@@ -100,12 +126,14 @@ void Game_Update(float dt)
                 Game_Reset();
                 g.mode = GAME_MODE_SURVIVAL;
                 g.state = GAME_STATE_PLAYING;
+                Level_StartWave(1);
             }
             if (IsKeyPressed(KEY_B) && g.save.unlockedBossRush)
             {
                 Game_Reset();
                 g.mode = GAME_MODE_BOSS_RUSH;
                 g.state = GAME_STATE_PLAYING;
+                Level_StartWave(1);
             }
             break;
         }
@@ -131,12 +159,40 @@ void Game_Update(float dt)
 
         case GAME_STATE_PLAYING:
         {
+            // Handle special weapon selection (Q key or touch button)
+            if (IsKeyPressed(KEY_Q))
+            {
+                // Cycle through available special weapons
+                if (g.player.missiles > 0 || g.player.laserBeams > 0 || g.player.soundwaves > 0)
+                {
+                    do {
+                        g.player.selectedSpecial = (SpecialWeaponType)((g.player.selectedSpecial + 1) % 4);
+                    } while (g.player.selectedSpecial != SPECIAL_NONE &&
+                             ((g.player.selectedSpecial == SPECIAL_MISSILE && g.player.missiles <= 0) ||
+                              (g.player.selectedSpecial == SPECIAL_LASER && g.player.laserBeams <= 0) ||
+                              (g.player.selectedSpecial == SPECIAL_SOUNDWAVE && g.player.soundwaves <= 0)));
+                }
+                else
+                {
+                    g.player.selectedSpecial = SPECIAL_NONE;
+                }
+            }
+
+            // Handle special weapon fire (E key or touch button)
+            g.specialFirePressed = IsKeyPressed(KEY_E);
+
             // Update player
             Player_Update(&g.player, dt);
 
-            // Auto-fire if holding fire button
+            // Auto-fire primary weapon if holding fire button
             if (g.firePressed)
                 Weapon_Fire(&g.player, g.bullets, dt);
+
+            // Fire special weapon if requested
+            if (g.specialFirePressed && g.player.selectedSpecial != SPECIAL_NONE)
+            {
+                Weapon_FireSpecial(&g.player);
+            }
 
             // Update entities
             Bullet_UpdateAll(dt);
@@ -171,7 +227,6 @@ void Game_Update(float dt)
 
         case GAME_STATE_PAUSED:
         {
-            // Resume on fire press
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
                 g.state = GAME_STATE_PLAYING;
             if (IsKeyPressed(KEY_M))
@@ -196,7 +251,6 @@ void Game_Update(float dt)
 
         case GAME_STATE_UPGRADE:
         {
-            // Navigate upgrades with number keys
             for (int i = 0; i < 6; i++)
             {
                 if (IsKeyPressed(KEY_ONE + i))
@@ -208,11 +262,10 @@ void Game_Update(float dt)
                         g.upgrades[i].upgradeLevel++;
                         g.upgrades[i].cost = (int)(g.upgrades[i].cost * 1.5f);
 
-                        // Apply upgrade
                         switch (i)
                         {
-                            case 0: break; // Firing speed handled in weapon.c
-                            case 1: break; // Damage handled in weapon.c
+                            case 0: break;
+                            case 1: break;
                             case 2: g.player.maxShield += 25; break;
                             case 3: g.player.speed += 20; break;
                             case 4: g.player.hasDrone = true; break;
@@ -234,7 +287,6 @@ void Game_Update(float dt)
 
 void Game_Draw(void)
 {
-    // Draw starfield background
     Starfield_Draw();
 
     switch (g.state)
@@ -245,31 +297,18 @@ void Game_Draw(void)
 
         case GAME_STATE_STORY:
             Starfield_Draw();
-            Story_Init(); // Ensures story lines are loaded
+            Story_Init();
             UI_DrawStoryOverlay();
             break;
 
         case GAME_STATE_PLAYING:
         {
-            // Apply screen shake
-            Vector2 offset = {0, 0};
-            if (g.screenShake > 0)
-            {
-                offset.x = (float)(rand() % 10 - 5) * g.screenShake;
-                offset.y = (float)(rand() % 10 - 5) * g.screenShake;
-            }
+            DrawRectangle(0, 0, SCREEN_WIDTH, 2, (Color){0, 100, 255, 100});
+            DrawRectangle(0, SCREEN_HEIGHT - 2, SCREEN_WIDTH, 2, (Color){0, 100, 255, 100});
 
-            // Draw game objects using rlPushMatrix-style offset
-            // raylib doesn't have rlPushMatrix in the simple API,
-            // so we just draw with offset
-
-            DrawRectangle(0, 0, SCREEN_WIDTH, 2, (Color){0, 100, 255, 100}); // Top border
-            DrawRectangle(0, SCREEN_HEIGHT - 2, SCREEN_WIDTH, 2, (Color){0, 100, 255, 100}); // Bot border
-
-            // Draw game objects
             for (int i = 0; i < MAX_POWERUPS; i++)
                 if (g.powerups[i].active)
-                    PowerUp_DrawAll(); // draws all
+                    PowerUp_DrawAll();
 
             for (int i = 0; i < MAX_ENEMIES; i++)
                 if (g.enemies[i].active)
@@ -279,7 +318,7 @@ void Game_Draw(void)
 
             for (int i = 0; i < MAX_PARTICLES; i++)
                 if (g.particles[i].active)
-                    Particle_DrawAll(); // draws all
+                    Particle_DrawAll();
 
             Player_Draw(&g.player);
 
@@ -291,7 +330,6 @@ void Game_Draw(void)
                 Vector2 dpos = {g.player.pos.x + dx, g.player.pos.y + dy};
                 DrawCircleV(dpos, 6, (Color){0, 255, 255, 255});
                 DrawCircleV(dpos, 4, (Color){0, 200, 255, 150});
-                // Drone fires periodically
                 if ((int)(g.gameTime * 3) % 2 == 0)
                 {
                     Bullet_Fire(dpos, (Vector2){400, 0}, 5, BULLET_PLAYER, (Color){0, 255, 255, 255});
@@ -304,7 +342,6 @@ void Game_Draw(void)
         }
 
         case GAME_STATE_PAUSED:
-            // Draw game world in background
             UI_DrawPauseMenu();
             break;
 

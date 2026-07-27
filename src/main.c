@@ -21,8 +21,14 @@ int main(void)
         float dt = GetFrameTime();
         if (dt > 0.05f) dt = 0.05f; // Clamp delta-time
 
-        // Handle escape for pause/menu
-        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_P))
+        // Handle escape - go to main menu
+        if (IsKeyPressed(KEY_ESCAPE))
+        {
+            if (g.state == GAME_STATE_PLAYING || g.state == GAME_STATE_PAUSED)
+                g.state = GAME_STATE_MENU;
+        }
+        // P key toggles pause
+        if (IsKeyPressed(KEY_P))
         {
             if (g.state == GAME_STATE_PLAYING)
                 g.state = GAME_STATE_PAUSED;

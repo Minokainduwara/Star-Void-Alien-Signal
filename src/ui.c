@@ -23,21 +23,21 @@ static Rectangle DrawNeonButton(const char *text, int x, int y, int w, int h, Co
 void UI_DrawMainMenu(void)
 {
     // Title
-    DrawCenteredText("STAR VOID", 80, 60, (Color){0, 200, 255, 255});
-    DrawCenteredText("Alien Signal", 140, 30, (Color){200, 220, 255, 200});
+    DrawCenteredText("STAR VOID", 50, 50, (Color){0, 200, 255, 255});
+    DrawCenteredText("Alien Signal", 100, 24, (Color){200, 220, 255, 200});
 
     // Subtitle
-    DrawCenteredText("A 2D Space Shooter", 180, 16, (Color){150, 200, 255, 150});
+    DrawCenteredText("A 2D Space Shooter", 130, 14, (Color){150, 200, 255, 150});
 
     // Decorative line
-    DrawLine(SCREEN_WIDTH / 2 - 150, 210, SCREEN_WIDTH / 2 + 150, 210, (Color){0, 200, 255, 100});
+    DrawLine(SCREEN_WIDTH / 2 - 150, 150, SCREEN_WIDTH / 2 + 150, 150, (Color){0, 200, 255, 100});
 
     // Menu options
     int btnW = 250;
-    int btnH = 45;
+    int btnH = 40;
     int startX = (SCREEN_WIDTH - btnW) / 2;
-    int startY = 250;
-    int spacing = 55;
+    int startY = 170;
+    int spacing = 48;
 
     Vector2 mouse = GetMousePosition();
     Rectangle r = {0, 0, btnW, btnH};
@@ -68,7 +68,7 @@ void UI_DrawMainMenu(void)
         Level_StartWave(1);
     }
 
-    // Boss Rush (locked until unlocked)
+    // Boss Rush
     Color bossColor = g.save.unlockedBossRush ? (Color){255, 100, 100, 255} : (Color){100, 100, 100, 100};
     r = (Rectangle){startX, startY + spacing * 2, btnW, btnH};
     bool hover3 = CheckCollisionPointRec(mouse, r) && g.save.unlockedBossRush;
@@ -82,20 +82,63 @@ void UI_DrawMainMenu(void)
         Level_StartWave(1);
     }
 
+    // Difficulty selection
+    int diffY = startY + spacing * 3 + 10;
+    DrawCenteredText("DIFFICULTY", diffY, 14, (Color){150, 200, 255, 200});
+
+    int diffBtnW = 80;
+    int diffBtnH = 30;
+    int diffStartX = (SCREEN_WIDTH - (diffBtnW * 3 + 20)) / 2;
+    int diffBtnY = diffY + 22;
+
+    const char *diffNames[] = {"Easy", "Normal", "Hard"};
+    Color diffColors[] = {
+        (Color){0, 255, 100, 255},
+        (Color){0, 200, 255, 255},
+        (Color){255, 100, 100, 255}
+    };
+
+    for (int i = 0; i < 3; i++)
+    {
+        int bx = diffStartX + i * (diffBtnW + 10);
+        r = (Rectangle){bx, diffBtnY, diffBtnW, diffBtnH};
+        bool isSelected = (int)g.difficulty == i;
+        bool hover = CheckCollisionPointRec(mouse, r);
+
+        Color col = isSelected ? diffColors[i] : (Color){100, 100, 100, 150};
+        Color bg = hover ? (Color){col.r, col.g, col.b, 60} : (Color){col.r, col.g, col.b, 20};
+        DrawRectangleRounded(r, 0.2f, 8, bg);
+        DrawRectangleRoundedLines(r, 0.2f, 8, col);
+
+        int tw = MeasureText(diffNames[i], 14);
+        DrawText(diffNames[i], bx + (diffBtnW - tw) / 2, diffBtnY + 7, 14, col);
+
+        if (hover && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            g.difficulty = (Difficulty)i;
+            switch (i)
+            {
+                case 0: g.difficultyMult = 0.6f; break;
+                case 1: g.difficultyMult = 1.0f; break;
+                case 2: g.difficultyMult = 1.5f; break;
+            }
+        }
+    }
+
     // Controls hint
-    DrawCenteredText("WASD/Arrows: Move | Space: Fire | ESC: Pause", SCREEN_HEIGHT - 60, 12, (Color){100, 150, 200, 150});
-    DrawCenteredText("Touch: Drag to move | Tap right side to fire", SCREEN_HEIGHT - 40, 12, (Color){100, 150, 200, 150});
+    DrawCenteredText("WASD/Arrows: Move | Space: Fire | Q: Select Special | E: Use Special", SCREEN_HEIGHT - 55, 11, (Color){100, 150, 200, 150});
+    DrawCenteredText("Touch: Drag to move | Tap right side to fire", SCREEN_HEIGHT - 38, 11, (Color){100, 150, 200, 150});
 
     // High score
     if (g.save.highScore > 0)
     {
         char hs[64];
         snprintf(hs, sizeof(hs), "High Score: %d", g.save.highScore);
-        DrawCenteredText(hs, SCREEN_HEIGHT - 100, 14, (Color){255, 200, 50, 200});
+        DrawCenteredText(hs, SCREEN_HEIGHT - 80, 12, (Color){255, 200, 50, 200});
     }
 
     // Version
-    DrawText("v1.0", 10, SCREEN_HEIGHT - 20, 10, (Color){50, 50, 50, 100});
+    DrawText("v1.1", 10, SCREEN_HEIGHT - 20, 10, (Color){50, 50, 50, 100});
 }
 
 void UI_DrawHUD(void)
@@ -140,6 +183,36 @@ void UI_DrawHUD(void)
     snprintf(killText, sizeof(killText), "Kills: %d", g.player.killCount);
     DrawText(killText, SCREEN_WIDTH / 2 - 50, 45, 12, (Color){200, 200, 200, 150});
 
+    // Special weapon HUD (bottom left)
+    int specialY = SCREEN_HEIGHT - 80;
+    DrawText("SPECIAL", 10, specialY, 12, (Color){200, 200, 200, 150});
+
+    // Missile ammo
+    Color missileCol = g.player.missiles > 0 ? (Color){255, 150, 50, 255} : (Color){100, 100, 100, 100};
+    bool missileSelected = (g.player.selectedSpecial == SPECIAL_MISSILE);
+    if (missileSelected) DrawRectangle(8, specialY + 14, 60, 18, (Color){255, 150, 50, 30});
+    DrawText(TextFormat("M:%d", g.player.missiles), 10, specialY + 15, 14, missileCol);
+
+    // Laser ammo
+    Color laserCol = g.player.laserBeams > 0 ? (Color){255, 50, 255, 255} : (Color){100, 100, 100, 100};
+    bool laserSelected = (g.player.selectedSpecial == SPECIAL_LASER);
+    if (laserSelected) DrawRectangle(58, specialY + 14, 60, 18, (Color){255, 50, 255, 30});
+    DrawText(TextFormat("L:%d", g.player.laserBeams), 60, specialY + 15, 14, laserCol);
+
+    // Soundwave ammo
+    Color soundCol = g.player.soundwaves > 0 ? (Color){200, 255, 100, 255} : (Color){100, 100, 100, 100};
+    bool soundSelected = (g.player.selectedSpecial == SPECIAL_SOUNDWAVE);
+    if (soundSelected) DrawRectangle(108, specialY + 14, 60, 18, (Color){200, 255, 100, 30});
+    DrawText(TextFormat("W:%d", g.player.soundwaves), 110, specialY + 15, 14, soundCol);
+
+    // Selected special indicator
+    if (g.player.selectedSpecial != SPECIAL_NONE)
+    {
+        const char *selName = Weapon_GetSpecialName(g.player.selectedSpecial);
+        DrawText(TextFormat("[%s]", selName), 10, specialY + 34, 10, (Color){255, 255, 200, 200});
+        DrawText("Q:Cycle E:Fire", 10, specialY + 46, 9, (Color){150, 150, 150, 150});
+    }
+
     // Combo display
     if (g.comboDisplayTimer > 0 && g.comboCount > 1)
     {
@@ -158,24 +231,20 @@ void UI_DrawHUD(void)
             (Color){255, 50, 50, (unsigned char)(pulse * 255)});
     }
 
-    // Upgrade hint
-    if (g.player.energyFragments >= 50)
-    {
-        DrawText("Press U for Upgrades", SCREEN_WIDTH / 2 - 60, SCREEN_HEIGHT - 30, 12,
-            (Color){0, 255, 200, 150});
-    }
+    // Difficulty indicator
+    const char *diffNames[] = {"Easy", "Normal", "Hard"};
+    Color diffColors[] = {{0, 255, 100, 150}, {0, 200, 255, 150}, {255, 100, 100, 150}};
+    DrawText(TextFormat("[%s]", diffNames[g.difficulty]), SCREEN_WIDTH - 100, 45, 10, diffColors[g.difficulty]);
 }
 
 void UI_DrawPauseMenu(void)
 {
-    // Dim background
     DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 0, 150});
 
     DrawCenteredText("PAUSED", SCREEN_HEIGHT / 2 - 60, 40, (Color){0, 200, 255, 255});
-    DrawCenteredText("Press ESC or SPACE to resume", SCREEN_HEIGHT / 2, 16, (Color){200, 200, 200, 200});
-    DrawCenteredText("Press M for Main Menu", SCREEN_HEIGHT / 2 + 30, 16, (Color){200, 200, 200, 150});
+    DrawCenteredText("Press P or SPACE to resume", SCREEN_HEIGHT / 2, 16, (Color){200, 200, 200, 200});
+    DrawCenteredText("Press ESC for Main Menu", SCREEN_HEIGHT / 2 + 30, 16, (Color){200, 200, 200, 150});
 
-    // Touch resume button
     Rectangle btn = {SCREEN_WIDTH / 2 - 100, SCREEN_HEIGHT / 2 + 70, 200, 50};
     Vector2 mouse = GetMousePosition();
     bool hover = CheckCollisionPointRec(mouse, btn);
@@ -221,7 +290,6 @@ void UI_DrawUpgradeMenu(void)
     snprintf(energyText, sizeof(energyText), "Energy Fragments: %d", g.player.energyFragments);
     DrawCenteredText(energyText, 70, 16, (Color){0, 255, 200, 200});
 
-    // Draw upgrade options
     int startY = 110;
     int spacing = 55;
 
@@ -232,30 +300,26 @@ void UI_DrawUpgradeMenu(void)
 
         if (g.upgrades[i].upgradeLevel >= 3)
         {
-            col = (Color){100, 100, 100, 100}; // Maxed out
+            col = (Color){100, 100, 100, 100};
         }
         else if (g.player.energyFragments >= g.upgrades[i].cost)
         {
-            col = (Color){0, 200, 255, 255}; // Can afford
+            col = (Color){0, 200, 255, 255};
         }
         else
         {
-            col = (Color){150, 150, 150, 150}; // Can't afford
+            col = (Color){150, 150, 150, 150};
         }
 
-        // Background
         DrawRectangle(50, y, SCREEN_WIDTH - 100, 45, (Color){col.r, col.g, col.b, 20});
         DrawRectangleLines(50, y, SCREEN_WIDTH - 100, 45, col);
 
-        // Name and level
         char nameText[64];
         snprintf(nameText, sizeof(nameText), "%d. %s [Lv.%d]", i + 1, g.upgrades[i].name, g.upgrades[i].upgradeLevel);
         DrawText(nameText, 60, y + 5, 16, col);
 
-        // Description
         DrawText(g.upgrades[i].desc, 60, y + 25, 12, (Color){col.r, col.g, col.b, 150});
 
-        // Cost
         if (g.upgrades[i].upgradeLevel < 3)
         {
             char costText[32];
@@ -281,7 +345,6 @@ void UI_DrawStoryOverlay(void)
     int tw = MeasureText(text, fontSize);
     DrawText(text, (SCREEN_WIDTH - tw) / 2, SCREEN_HEIGHT / 2 - 20, fontSize, (Color){0, 200, 255, 255});
 
-    // Decorative lines
     DrawLine(SCREEN_WIDTH / 2 - 200, SCREEN_HEIGHT / 2 + 20, SCREEN_WIDTH / 2 + 200, SCREEN_HEIGHT / 2 + 20,
         (Color){0, 200, 255, 50});
 
@@ -290,14 +353,31 @@ void UI_DrawStoryOverlay(void)
 
 void UI_DrawTouchControls(void)
 {
-    // Semi-transparent fire button
+    // Fire button
     Rectangle fireBtn = {SCREEN_WIDTH - 80, SCREEN_HEIGHT - 80, 60, 60};
     Color fireCol = g.firePressed ? (Color){255, 100, 100, 100} : (Color){255, 50, 50, 50};
     DrawCircleV((Vector2){fireBtn.x + 30, fireBtn.y + 30}, 30, fireCol);
     DrawCircleLines(fireBtn.x + 30, fireBtn.y + 30, 30, (Color){255, 100, 100, 150});
     DrawText("FIRE", fireBtn.x + 8, fireBtn.y + 22, 12, (Color){255, 200, 200, 200});
 
-    // Movement area indicator (subtle)
+    // Special weapon button (only if has special ammo)
+    if (g.player.selectedSpecial != SPECIAL_NONE)
+    {
+        Rectangle specBtn = {SCREEN_WIDTH - 80, SCREEN_HEIGHT - 150, 60, 60};
+        Color specCol = (Color){255, 200, 100, 80};
+        DrawCircleV((Vector2){specBtn.x + 30, specBtn.y + 30}, 25, specCol);
+        DrawCircleLines(specBtn.x + 30, specBtn.y + 30, 25, (Color){255, 200, 100, 150});
+        DrawText("SP", specBtn.x + 12, specBtn.y + 22, 12, (Color){255, 255, 200, 200});
+
+        // Check touch on special button
+        Vector2 touch = g.touchPos;
+        if (g.touchActive && CheckCollisionPointRec(touch, specBtn))
+        {
+            g.specialFirePressed = true;
+        }
+    }
+
+    // Movement area indicator
     DrawRectangleLines(5, (int)PLAY_AREA_TOP, (int)(SCREEN_WIDTH * 0.7f) - 5,
         (int)(PLAY_AREA_BOTTOM - PLAY_AREA_TOP), (Color){0, 100, 255, 20});
 }
@@ -321,7 +401,6 @@ void UI_DrawWinScreen(void)
 
 void UI_HandleMenuInput(void)
 {
-    // Keyboard shortcuts for menu
     if (IsKeyPressed(KEY_C))
     {
         Game_Reset();

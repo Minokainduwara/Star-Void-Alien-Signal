@@ -29,17 +29,19 @@ void Level_StartWave(int waveNum)
     for (int i = 0; i < MAX_ENEMIES; i++)
         g.enemies[i].active = false;
 
-    // Determine wave composition
-    int baseEnemies = 3 + waveNum * 2;
+    // Determine wave composition based on difficulty
+    float diffScale = g.difficultyMult;
+    int baseEnemies = (int)((3 + waveNum * 2) * diffScale);
     if (baseEnemies > MAX_WAVE_ENEMIES)
         baseEnemies = MAX_WAVE_ENEMIES;
+    if (baseEnemies < 2) baseEnemies = 2;
     g.wave.enemiesInWave = baseEnemies;
     g.wave.bossWave = (waveNum % 5 == 0);
 
     // Set spawn interval based on difficulty
-    g.wave.spawnInterval = 1.0f - waveNum * 0.03f;
-    if (g.wave.spawnInterval < 0.25f)
-        g.wave.spawnInterval = 0.25f;
+    g.wave.spawnInterval = (1.0f - waveNum * 0.03f) / diffScale;
+    if (g.wave.spawnInterval < 0.2f)
+        g.wave.spawnInterval = 0.2f;
 
     // For boss rush mode
     if (g.mode == GAME_MODE_BOSS_RUSH)
@@ -52,7 +54,7 @@ void Level_StartWave(int waveNum)
     // Survival mode: continuous scaling
     if (g.mode == GAME_MODE_SURVIVAL)
     {
-        g.wave.enemiesInWave = 5 + waveNum;
+        g.wave.enemiesInWave = (int)((5 + waveNum) * diffScale);
         if (g.wave.enemiesInWave > MAX_WAVE_ENEMIES)
             g.wave.enemiesInWave = MAX_WAVE_ENEMIES;
     }
@@ -65,17 +67,22 @@ void Level_StartWave(int waveNum)
         SpawnNextEnemy();
         g.wave.enemiesSpawned++;
     }
+
+    Level_ScaleDifficulty();
 }
 
 static EnemyType GetRandomEnemyType(int wave)
 {
     int r = rand() % 100;
-    if (wave <= 2)
+    float scale = g.difficultyMult;
+    int adjustedWave = (int)(wave * scale);
+
+    if (adjustedWave <= 2)
     {
         if (r < 70) return ENEMY_SCOUT;
         return ENEMY_FIGHTER;
     }
-    else if (wave <= 5)
+    else if (adjustedWave <= 5)
     {
         if (r < 40) return ENEMY_SCOUT;
         if (r < 70) return ENEMY_FIGHTER;
@@ -99,7 +106,6 @@ void SpawnNextEnemy(void)
 
     if (g.wave.bossWave && g.wave.enemiesSpawned == 0)
     {
-        // Spawn boss
         type = ENEMY_BOSS;
         pos = (Vector2){SCREEN_WIDTH + 40, SCREEN_HEIGHT / 2.0f};
         Audio_PlayBossWarning();
@@ -123,7 +129,6 @@ void Level_Update(float dt)
         g.wave.waveDelay -= dt;
         if (g.wave.waveDelay <= 0)
         {
-            // Check if we can access upgrade menu
             if (g.wave.currentWave % 3 == 0 && g.mode == GAME_MODE_CAMPAIGN)
             {
                 g.state = GAME_STATE_UPGRADE;
@@ -131,14 +136,12 @@ void Level_Update(float dt)
 
             int nextWave = g.wave.currentWave + 1;
 
-            // Check win condition
             if (g.mode == GAME_MODE_CAMPAIGN && nextWave > 10)
             {
                 g.state = GAME_STATE_WIN;
                 return;
             }
 
-            // Check survival mode end (no end - infinite)
             if (g.mode == GAME_MODE_BOSS_RUSH && nextWave > 5)
             {
                 g.state = GAME_STATE_WIN;
@@ -147,7 +150,6 @@ void Level_Update(float dt)
 
             Level_StartWave(nextWave);
 
-            // Show story lines at certain waves
             if (g.mode == GAME_MODE_CAMPAIGN)
             {
                 if (nextWave == 2 || nextWave == 4 || nextWave == 6 || nextWave == 8 || nextWave == 10)
@@ -159,7 +161,6 @@ void Level_Update(float dt)
         return;
     }
 
-    // Spawn enemies
     g.wave.spawnTimer -= dt;
     if (g.wave.spawnTimer <= 0 && g.wave.enemiesSpawned < g.wave.enemiesInWave)
     {
@@ -168,7 +169,6 @@ void Level_Update(float dt)
         g.wave.spawnTimer = g.wave.spawnInterval;
     }
 
-    // Check if wave is complete (all enemies spawned and all dead)
     if (g.wave.enemiesSpawned >= g.wave.enemiesInWave)
     {
         bool anyAlive = false;
@@ -195,5 +195,5 @@ bool Level_IsWaveComplete(void)
 
 void Level_ScaleDifficulty(void)
 {
-    g.difficulty = 1.0f + g.wave.currentWave * 0.2f;
+    g.wave.difficulty = 1.0f + g.wave.currentWave * 0.2f * g.difficultyMult;
 }
