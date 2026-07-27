@@ -300,6 +300,7 @@ typedef struct {
     Rectangle screenRect;
     bool firePressed;
     bool specialFirePressed;
+    bool exitRequested;
     Vector2 touchPos;
     bool touchActive;
     bool lastFrameTouchActive;

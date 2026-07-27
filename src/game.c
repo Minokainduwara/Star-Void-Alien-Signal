@@ -242,6 +242,11 @@ void Game_Update(float dt)
                 // Quit to menu without saving
                 g.state = GAME_STATE_MENU;
             }
+            if (IsKeyPressed(KEY_X))
+            {
+                // Exit application
+                g.exitRequested = true;
+            }
             break;
         }
 

@@ -21,13 +21,13 @@ int main(void)
         float dt = GetFrameTime();
         if (dt > 0.05f) dt = 0.05f; // Clamp delta-time
 
-        // Handle escape - go to dashboard (in-game) or quit (on menu)
+        // Handle escape - go to dashboard in-game, does nothing on menu
         if (IsKeyPressed(KEY_ESCAPE))
         {
             if (g.state == GAME_STATE_PLAYING || g.state == GAME_STATE_PAUSED)
                 g.state = GAME_STATE_DASHBOARD;
-            else if (g.state == GAME_STATE_MENU)
-                break; // Quit application
+            else if (g.state == GAME_STATE_LEVEL_SELECT || g.state == GAME_STATE_SURVIVAL_MENU)
+                g.state = GAME_STATE_MENU;
         }
         // P key toggles pause
         if (IsKeyPressed(KEY_P))
@@ -74,6 +74,10 @@ int main(void)
 
         // Update
         Game_Update(dt);
+
+        // Check if exit was requested from dashboard
+        if (g.exitRequested)
+            break;
 
         // Draw
         BeginDrawing();

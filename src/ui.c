@@ -71,6 +71,15 @@ void UI_DrawMainMenu(void)
         Level_StartWave(1);
     }
 
+    // Exit Game
+    DrawNeonButton("Exit Game", startX, startY + spacing * 3, btnW, btnH,
+        (Color){150, 150, 150, 255},
+        CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing * 3, btnW, btnH}), &r);
+    if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        g.exitRequested = true;
+    }
+
     // Difficulty selection
     int diffY = startY + spacing * 3 + 10;
     DrawCenteredText("DIFFICULTY", diffY, 14, (Color){150, 200, 255, 200});
@@ -171,8 +180,17 @@ void UI_DrawDashboard(void)
     if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         g.state = GAME_STATE_MENU;
 
+    // Exit Application
+    DrawNeonButton("Exit Application", startX, startY + spacing * 3, btnW, btnH,
+        (Color){150, 150, 150, 255},
+        CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing * 3, btnW, btnH}), &r);
+    if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+    {
+        g.exitRequested = true;
+    }
+
     // Keyboard hints
-    DrawCenteredText("R: Resume | S: Save & Exit | Q: Quit", SCREEN_HEIGHT - 40, 14, (Color){150, 150, 150, 200});
+    DrawCenteredText("R: Resume | S: Save & Exit | Q: Quit to Menu | X: Exit", SCREEN_HEIGHT - 40, 14, (Color){150, 150, 150, 200});
 }
 
 // ---------------------------------------------------------------------------
