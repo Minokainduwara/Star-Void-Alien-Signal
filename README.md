@@ -120,6 +120,44 @@ StarVoidAlienSignal/
 - **Modular design**: Each system in its own .c file with clear interfaces
 - **Desktop first, Android ready**: Touch controls built-in, raylib's Android support requires only NDK setup
 
+## Future Development
+
+### Planned Features
+- **More enemy types** - Elite variants, mini-bosses, and environmental hazards
+- **New weapon types** - Plasma cannon, railgun, homing missiles, shield generator
+- **Weapon customization** - Modifiable bullet patterns, elemental damage types (fire, ice, lightning)
+- **Ship customization** - Visual skins, ship classes with unique abilities (tank, scout, stealth)
+- **More power-ups** - Time slow, shield reflect, multi-shot temporary upgrades
+- **Boss variety** - 10+ unique boss designs with different attack patterns and phases
+- **New game modes** - Time attack, endless high-score chase, cooperative 2-player mode
+- **Procedural generation** - Random level layouts, enemy compositions, and environmental effects
+- **Story expansion** - Full campaign with 50+ waves, cutscenes, multiple endings
+- **Leaderboards** - Online high score system with global rankings
+- **Achievements** - Unlockable badges for special accomplishments
+- **Daily challenges** - Special scenarios with unique rules and rewards
+
+### Quality of Life
+- **Settings persistence** - Save volume, controls, and preferences to file
+- **Multiple save slots** - 3 save slots for different playthroughs
+- **Replay system** - Save and watch your best runs
+- **Tutorial mode** - Interactive tutorial for new players
+- **Accessibility options** - Colorblind modes, difficulty sliders, auto-fire options
+
+### Technical Improvements
+- **Android build** - Full mobile deployment with touch-optimized UI
+- **WebGL port** - Browser-based version using raylib's web backend
+- **Steam integration** - Achievements, cloud saves, workshop support
+- **Mod support** - Lua scripting for custom enemies, weapons, and levels
+- **Multiplayer** - Local co-op and versus modes
+- **Performance optimization** - Better particle systems, GPU acceleration
+
+### Visual Enhancements
+- **Animated sprites** - Frame-by-frame ship and enemy animations
+- **Dynamic lighting** - Real-time light sources and shadows
+- **Screen effects** - Chromatic aberration, bloom, CRT shader
+- **Parallax backgrounds** - Multi-layer scrolling nebula and asteroid fields
+- **Weather effects** - Asteroids, ion storms, nebula clouds
+
 ## Android Porting
 
 To build for Android:
