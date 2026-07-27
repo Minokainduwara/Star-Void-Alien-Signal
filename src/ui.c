@@ -1,14 +1,12 @@
 #include "game.h"
 #include <stdio.h>
 
-// Helper: draw centered text
 static void DrawCenteredText(const char *text, int y, int fontSize, Color color)
 {
     int tw = MeasureText(text, fontSize);
     DrawText(text, (SCREEN_WIDTH - tw) / 2, y, fontSize, color);
 }
 
-// Helper: draw a neon button - returns the rect so we can check hover
 static void DrawNeonButton(const char *text, int x, int y, int w, int h, Color color, bool hover, Rectangle *outRect)
 {
     Rectangle rect = {x, y, w, h};
@@ -26,43 +24,36 @@ static void DrawNeonButton(const char *text, int x, int y, int w, int h, Color c
 
 void UI_DrawMainMenu(void)
 {
-    DrawCenteredText("STAR VOID", 50, 50, (Color){0, 200, 255, 255});
-    DrawCenteredText("Alien Signal", 100, 24, (Color){200, 220, 255, 200});
-    DrawCenteredText("A 2D Space Shooter", 130, 14, (Color){150, 200, 255, 150});
-    DrawLine(SCREEN_WIDTH / 2 - 150, 150, SCREEN_WIDTH / 2 + 150, 150, (Color){0, 200, 255, 100});
+    DrawCenteredText("STAR VOID", 40, 50, (Color){0, 200, 255, 255});
+    DrawCenteredText("Alien Signal", 90, 24, (Color){200, 220, 255, 200});
+    DrawLine(SCREEN_WIDTH / 2 - 150, 120, SCREEN_WIDTH / 2 + 150, 120, (Color){0, 200, 255, 100});
 
-    int btnW = 250;
-    int btnH = 40;
+    int btnW = 220;
+    int btnH = 38;
     int startX = (SCREEN_WIDTH - btnW) / 2;
-    int startY = 170;
-    int spacing = 48;
+    int startY = 140;
+    int spacing = 44;
 
     Vector2 mouse = GetMousePosition();
     Rectangle r;
 
-    // Campaign → Level Select
-    DrawNeonButton("Campaign Mode", startX, startY, btnW, btnH,
+    // Column 1 - Game modes
+    DrawNeonButton("Campaign", startX - 110, startY, btnW, btnH,
         (Color){0, 200, 255, 255},
-        CheckCollisionPointRec(mouse, (Rectangle){startX, startY, btnW, btnH}), &r);
+        CheckCollisionPointRec(mouse, (Rectangle){startX - 110, startY, btnW, btnH}), &r);
     if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
         g.state = GAME_STATE_LEVEL_SELECT;
-    }
 
-    // Survival → Survival Menu
-    DrawNeonButton("Survival Mode", startX, startY + spacing, btnW, btnH,
+    DrawNeonButton("Survival", startX - 110, startY + spacing, btnW, btnH,
         (Color){255, 200, 100, 255},
-        CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing, btnW, btnH}), &r);
+        CheckCollisionPointRec(mouse, (Rectangle){startX - 110, startY + spacing, btnW, btnH}), &r);
     if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
-    {
         g.state = GAME_STATE_SURVIVAL_MENU;
-    }
 
-    // Boss Rush
     Color bossColor = g.save.unlockedBossRush ? (Color){255, 100, 100, 255} : (Color){100, 100, 100, 100};
     DrawNeonButton(g.save.unlockedBossRush ? "Boss Rush" : "Boss Rush [LOCKED]",
-        startX, startY + spacing * 2, btnW, btnH, bossColor,
-        CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing * 2, btnW, btnH}) && g.save.unlockedBossRush, &r);
+        startX - 110, startY + spacing * 2, btnW, btnH, bossColor,
+        CheckCollisionPointRec(mouse, (Rectangle){startX - 110, startY + spacing * 2, btnW, btnH}) && g.save.unlockedBossRush, &r);
     if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && g.save.unlockedBossRush)
     {
         Game_Reset();
@@ -71,17 +62,36 @@ void UI_DrawMainMenu(void)
         Level_StartWave(1);
     }
 
-    // Exit Game
-    DrawNeonButton("Exit Game", startX, startY + spacing * 3, btnW, btnH,
+    // Column 2 - System buttons
+    DrawNeonButton("Settings", startX + 110, startY, btnW, btnH,
+        (Color){150, 150, 255, 255},
+        CheckCollisionPointRec(mouse, (Rectangle){startX + 110, startY, btnW, btnH}), &r);
+    if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        g.state = GAME_STATE_SETTINGS;
+
+    DrawNeonButton("How to Play", startX + 110, startY + spacing, btnW, btnH,
+        (Color){150, 255, 150, 255},
+        CheckCollisionPointRec(mouse, (Rectangle){startX + 110, startY + spacing, btnW, btnH}), &r);
+    if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        g.state = GAME_STATE_HOW_TO_PLAY;
+
+    DrawNeonButton("Credits", startX + 110, startY + spacing * 2, btnW, btnH,
+        (Color){255, 150, 255, 255},
+        CheckCollisionPointRec(mouse, (Rectangle){startX + 110, startY + spacing * 2, btnW, btnH}), &r);
+    if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        g.state = GAME_STATE_CREDITS;
+
+    // Bottom row - Exit
+    DrawNeonButton("Exit Game", startX, startY + spacing * 3 + 10, btnW, btnH,
         (Color){150, 150, 150, 255},
-        CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing * 3, btnW, btnH}), &r);
+        CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing * 3 + 10, btnW, btnH}), &r);
     if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
     {
         g.exitRequested = true;
     }
 
     // Difficulty selection
-    int diffY = startY + spacing * 3 + 10;
+    int diffY = startY + spacing * 4 + 20;
     DrawCenteredText("DIFFICULTY", diffY, 14, (Color){150, 200, 255, 200});
 
     int diffBtnW = 80;
@@ -116,9 +126,6 @@ void UI_DrawMainMenu(void)
         }
     }
 
-    // Controls hint
-    DrawCenteredText("WASD/Arrows: Move | Space: Fire | Q: Select Special | E: Use Special", SCREEN_HEIGHT - 55, 11, (Color){100, 150, 200, 150});
-    DrawCenteredText("Touch: Drag to move | Tap right side to fire", SCREEN_HEIGHT - 38, 11, (Color){100, 150, 200, 150});
     DrawCenteredText("ESC: Quit", SCREEN_HEIGHT - 22, 11, (Color){100, 100, 100, 150});
 
     if (g.save.highScore > 0)
@@ -128,11 +135,11 @@ void UI_DrawMainMenu(void)
         DrawCenteredText(hs, SCREEN_HEIGHT - 80, 12, (Color){255, 200, 50, 200});
     }
 
-    DrawText("v1.2", 10, SCREEN_HEIGHT - 20, 10, (Color){50, 50, 50, 100});
+    DrawText("v1.3", 10, SCREEN_HEIGHT - 20, 10, (Color){50, 50, 50, 100});
 }
 
 // ---------------------------------------------------------------------------
-// DASHBOARD (in-game ESC menu)
+// DASHBOARD
 // ---------------------------------------------------------------------------
 
 void UI_DrawDashboard(void)
@@ -141,7 +148,6 @@ void UI_DrawDashboard(void)
 
     DrawCenteredText("DASHBOARD", 80, 40, (Color){0, 200, 255, 255});
 
-    // Game info
     char info[128];
     snprintf(info, sizeof(info), "Wave: %d | Score: %d | Kills: %d",
         g.wave.currentWave, g.player.score, g.player.killCount);
@@ -156,14 +162,12 @@ void UI_DrawDashboard(void)
     Vector2 mouse = GetMousePosition();
     Rectangle r;
 
-    // Resume
     DrawNeonButton("Resume Game", startX, startY, btnW, btnH,
         (Color){0, 200, 255, 255},
         CheckCollisionPointRec(mouse, (Rectangle){startX, startY, btnW, btnH}), &r);
     if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         g.state = GAME_STATE_PLAYING;
 
-    // Save & Exit
     DrawNeonButton("Save & Exit to Menu", startX, startY + spacing, btnW, btnH,
         (Color){0, 255, 100, 255},
         CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing, btnW, btnH}), &r);
@@ -173,14 +177,12 @@ void UI_DrawDashboard(void)
         g.state = GAME_STATE_MENU;
     }
 
-    // Quit without saving
     DrawNeonButton("Quit (No Save)", startX, startY + spacing * 2, btnW, btnH,
         (Color){255, 100, 100, 255},
         CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing * 2, btnW, btnH}), &r);
     if (CheckCollisionPointRec(mouse, r) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         g.state = GAME_STATE_MENU;
 
-    // Exit Application
     DrawNeonButton("Exit Application", startX, startY + spacing * 3, btnW, btnH,
         (Color){150, 150, 150, 255},
         CheckCollisionPointRec(mouse, (Rectangle){startX, startY + spacing * 3, btnW, btnH}), &r);
@@ -189,12 +191,11 @@ void UI_DrawDashboard(void)
         g.exitRequested = true;
     }
 
-    // Keyboard hints
     DrawCenteredText("R: Resume | S: Save & Exit | Q: Quit to Menu | X: Exit", SCREEN_HEIGHT - 40, 14, (Color){150, 150, 150, 200});
 }
 
 // ---------------------------------------------------------------------------
-// LEVEL SELECT (Campaign)
+// LEVEL SELECT
 // ---------------------------------------------------------------------------
 
 void UI_DrawLevelSelect(void)
@@ -234,7 +235,6 @@ void UI_DrawLevelSelect(void)
         int tw = MeasureText(lvlText, 20);
         DrawText(lvlText, bx + (btnW - tw) / 2, by + 14, 20, colC);
 
-        // Boss indicator every 5th level
         if (i % 5 == 0 && unlocked)
         {
             DrawText("BOSS", bx + 5, by + btnH - 12, 8, (Color){255, 50, 50, 200});
@@ -280,7 +280,6 @@ void UI_DrawSurvivalMenu(void)
     Vector2 mouse = GetMousePosition();
     Rectangle r;
 
-    // New Game
     DrawNeonButton("New Game", startX, startY, btnW, btnH,
         (Color){0, 255, 100, 255},
         CheckCollisionPointRec(mouse, (Rectangle){startX, startY, btnW, btnH}), &r);
@@ -292,7 +291,6 @@ void UI_DrawSurvivalMenu(void)
         Level_StartWave(1);
     }
 
-    // Continue (only if save exists)
     Color continueCol = hasSave ? (Color){0, 200, 255, 255} : (Color){80, 80, 80, 100};
     bool canContinue = hasSave && CheckCollisionPointRec(mouse, (Rectangle){startX, startY + 55, btnW, btnH});
     DrawNeonButton(hasSave ? "Continue" : "No Save Found", startX, startY + 55, btnW, btnH,
@@ -304,7 +302,6 @@ void UI_DrawSurvivalMenu(void)
         g.state = GAME_STATE_PLAYING;
     }
 
-    // Delete Save
     if (hasSave)
     {
         DrawNeonButton("Delete Save", startX, startY + 110, btnW, btnH,
@@ -359,7 +356,6 @@ void UI_DrawHUD(void)
     snprintf(killText, sizeof(killText), "Kills: %d", g.player.killCount);
     DrawText(killText, SCREEN_WIDTH / 2 - 50, 45, 12, (Color){200, 200, 200, 150});
 
-    // Special weapon HUD
     int specialY = SCREEN_HEIGHT - 80;
     DrawText("SPECIAL", 10, specialY, 12, (Color){200, 200, 200, 150});
 
@@ -402,7 +398,6 @@ void UI_DrawHUD(void)
     Color diffColors[] = {{0, 255, 100, 150}, {0, 200, 255, 150}, {255, 100, 100, 150}};
     DrawText(TextFormat("[%s]", diffNames[g.difficulty]), SCREEN_WIDTH - 100, 45, 10, diffColors[g.difficulty]);
 
-    // ESC hint
     DrawText("ESC: Dashboard", 10, SCREEN_HEIGHT - 20, 10, (Color){100, 100, 100, 150});
 }
 
@@ -589,19 +584,94 @@ void UI_DrawWinScreen(void)
 }
 
 // ---------------------------------------------------------------------------
-// MENU INPUT HANDLER (keyboard shortcuts for main menu)
+// SETTINGS
+// ---------------------------------------------------------------------------
+
+void UI_DrawSettings(void)
+{
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 20, 230});
+
+    DrawCenteredText("SETTINGS", 50, 40, (Color){0, 200, 255, 255});
+    DrawCenteredText("(Coming Soon)", 100, 20, (Color){150, 150, 150, 200});
+
+    DrawCenteredText("Future settings will include:", 160, 16, (Color){200, 200, 200, 150});
+    DrawCenteredText("- Sound volume", 190, 14, (Color){150, 150, 150, 120});
+    DrawCenteredText("- Music volume", 210, 14, (Color){150, 150, 150, 120});
+    DrawCenteredText("- Touch control size", 230, 14, (Color){150, 150, 150, 120});
+    DrawCenteredText("- Graphics quality", 250, 14, (Color){150, 150, 150, 120});
+
+    DrawCenteredText("Press ESC or BACKSPACE to return", SCREEN_HEIGHT - 40, 14, (Color){150, 150, 150, 200});
+}
+
+// ---------------------------------------------------------------------------
+// HOW TO PLAY
+// ---------------------------------------------------------------------------
+
+void UI_DrawHowToPlay(void)
+{
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 20, 230});
+
+    DrawCenteredText("HOW TO PLAY", 40, 35, (Color){0, 200, 255, 255});
+
+    int y = 100;
+    int spacing = 28;
+
+    DrawCenteredText("Controls:", y, 18, (Color){200, 200, 255, 200}); y += spacing;
+    DrawCenteredText("WASD / Arrow Keys - Move ship", y, 14, (Color){150, 150, 150, 180}); y += spacing;
+    DrawCenteredText("SPACE / ENTER - Fire weapon", y, 14, (Color){150, 150, 150, 180}); y += spacing;
+    DrawCenteredText("Q - Cycle special weapons", y, 14, (Color){150, 150, 150, 180}); y += spacing;
+    DrawCenteredText("E - Use selected special weapon", y, 14, (Color){150, 150, 150, 180}); y += spacing;
+    DrawCenteredText("ESC - Dashboard (in-game) / Back (menus)", y, 14, (Color){150, 150, 150, 180}); y += spacing;
+    DrawCenteredText("P - Pause / Resume", y, 14, (Color){150, 150, 150, 180}); y += spacing * 2;
+
+    DrawCenteredText("Touch Controls:", y, 18, (Color){200, 200, 255, 200}); y += spacing;
+    DrawCenteredText("Drag left side - Move ship", y, 14, (Color){150, 150, 150, 180}); y += spacing;
+    DrawCenteredText("Tap right side - Fire weapon", y, 14, (Color){150, 150, 150, 180}); y += spacing;
+    DrawCenteredText("Special button - Use special weapon", y, 14, (Color){150, 150, 150, 180}); y += spacing * 2;
+
+    DrawCenteredText("Objective:", y, 18, (Color){200, 200, 255, 200}); y += spacing;
+    DrawCenteredText("Destroy enemies, collect energy, upgrade weapons!", y, 14, (Color){150, 150, 150, 180});
+
+    DrawCenteredText("Press ESC or BACKSPACE to return", SCREEN_HEIGHT - 30, 14, (Color){150, 150, 150, 200});
+}
+
+// ---------------------------------------------------------------------------
+// CREDITS
+// ---------------------------------------------------------------------------
+
+void UI_DrawCredits(void)
+{
+    DrawRectangle(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT, (Color){0, 0, 20, 230});
+
+    DrawCenteredText("CREDITS", 50, 40, (Color){0, 200, 255, 255});
+
+    int y = 130;
+    int spacing = 35;
+
+    DrawCenteredText("Developed by Minoka Wickramasinghe", y, 20, (Color){200, 220, 255, 255}); y += spacing * 2;
+
+    DrawCenteredText("GitHub:", y, 16, (Color){150, 150, 150, 200}); y += spacing;
+    DrawCenteredText("https://github.com/Minokainduwara", y, 14, (Color){0, 200, 255, 255}); y += spacing * 2;
+
+    DrawCenteredText("Website:", y, 16, (Color){150, 150, 150, 200}); y += spacing;
+    DrawCenteredText("https://minokainduwara.fwh.is", y, 14, (Color){0, 255, 200, 255}); y += spacing * 2;
+
+    DrawCenteredText("Built with raylib", y, 14, (Color){100, 100, 100, 150}); y += spacing;
+    DrawCenteredText("Star Void: Alien Signal v1.3", y, 12, (Color){80, 80, 80, 120});
+
+    DrawCenteredText("Press ESC or BACKSPACE to return", SCREEN_HEIGHT - 30, 14, (Color){150, 150, 150, 200});
+}
+
+// ---------------------------------------------------------------------------
+// MENU INPUT HANDLER
 // ---------------------------------------------------------------------------
 
 void UI_HandleMenuInput(void)
 {
     if (IsKeyPressed(KEY_C))
-    {
         g.state = GAME_STATE_LEVEL_SELECT;
-    }
     if (IsKeyPressed(KEY_S))
-    {
         g.state = GAME_STATE_SURVIVAL_MENU;
-    }
     if (IsKeyPressed(KEY_B) && g.save.unlockedBossRush)
     {
         Game_Reset();

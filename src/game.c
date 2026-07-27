@@ -9,7 +9,6 @@ void Game_Init(void)
     g.difficultyMult = 1.0f;
     g.screenRect = (Rectangle){0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
-    // Load persistent save data
     g.save.unlockedLevel = 1;
     g.save.unlockedBossRush = false;
     g.save.survivalSaveExists = false;
@@ -17,7 +16,6 @@ void Game_Init(void)
     Player_Init(&g.player);
     Level_Init();
 
-    // Init upgrades
     strcpy(g.upgrades[0].name, "Firing Speed");
     strcpy(g.upgrades[0].desc, "Increase fire rate");
     g.upgrades[0].cost = 50;
@@ -77,8 +75,6 @@ void Game_Reset(void)
 
 void Game_SaveState(void)
 {
-    // Ensure saves directory exists
-    // On most systems this will work; if not, save silently fails
     GameSave save;
     memset(&save, 0, sizeof(GameSave));
     save.valid = true;
@@ -108,7 +104,6 @@ void Game_SaveState(void)
         fclose(f);
     }
 
-    // Update save flags
     if (g.mode == GAME_MODE_SURVIVAL)
         g.save.survivalSaveExists = true;
 }
@@ -225,34 +220,22 @@ void Game_Update(float dt)
 
         case GAME_STATE_DASHBOARD:
         {
-            // Dashboard handled in UI - keyboard shortcuts
             if (IsKeyPressed(KEY_R))
-            {
-                // Resume game
                 g.state = GAME_STATE_PLAYING;
-            }
             if (IsKeyPressed(KEY_S))
             {
-                // Save & Exit
                 Game_SaveState();
                 g.state = GAME_STATE_MENU;
             }
             if (IsKeyPressed(KEY_Q))
-            {
-                // Quit to menu without saving
                 g.state = GAME_STATE_MENU;
-            }
             if (IsKeyPressed(KEY_X))
-            {
-                // Exit application
                 g.exitRequested = true;
-            }
             break;
         }
 
         case GAME_STATE_LEVEL_SELECT:
         {
-            // Level select handled in UI
             if (IsKeyPressed(KEY_ESCAPE))
                 g.state = GAME_STATE_MENU;
             break;
@@ -277,6 +260,15 @@ void Game_Update(float dt)
                 }
             }
             if (IsKeyPressed(KEY_ESCAPE))
+                g.state = GAME_STATE_MENU;
+            break;
+        }
+
+        case GAME_STATE_SETTINGS:
+        case GAME_STATE_HOW_TO_PLAY:
+        case GAME_STATE_CREDITS:
+        {
+            if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_BACKSPACE))
                 g.state = GAME_STATE_MENU;
             break;
         }
@@ -439,6 +431,18 @@ void Game_Draw(void)
 
         case GAME_STATE_SURVIVAL_MENU:
             UI_DrawSurvivalMenu();
+            break;
+
+        case GAME_STATE_SETTINGS:
+            UI_DrawSettings();
+            break;
+
+        case GAME_STATE_HOW_TO_PLAY:
+            UI_DrawHowToPlay();
+            break;
+
+        case GAME_STATE_CREDITS:
+            UI_DrawCredits();
             break;
 
         case GAME_STATE_STORY:

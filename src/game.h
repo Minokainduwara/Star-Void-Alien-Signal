@@ -60,7 +60,10 @@ typedef enum {
     GAME_STATE_GAMEOVER,
     GAME_STATE_UPGRADE,
     GAME_STATE_STORY,
-    GAME_STATE_WIN
+    GAME_STATE_WIN,
+    GAME_STATE_SETTINGS,
+    GAME_STATE_HOW_TO_PLAY,
+    GAME_STATE_CREDITS
 } GameState;
 
 typedef enum {
@@ -403,6 +406,9 @@ void UI_DrawUpgradeMenu(void);
 void UI_DrawStoryOverlay(void);
 void UI_DrawTouchControls(void);
 void UI_DrawWinScreen(void);
+void UI_DrawSettings(void);
+void UI_DrawHowToPlay(void);
+void UI_DrawCredits(void);
 void UI_HandleMenuInput(void);
 
 // powerup.c
