@@ -9,6 +9,11 @@ void Game_Init(void)
     g.difficultyMult = 1.0f;
     g.screenRect = (Rectangle){0, 0, SCREEN_WIDTH, SCREEN_HEIGHT};
 
+    // Load persistent save data
+    g.save.unlockedLevel = 1;
+    g.save.unlockedBossRush = false;
+    g.save.survivalSaveExists = false;
+
     Player_Init(&g.player);
     Level_Init();
 
@@ -43,7 +48,6 @@ void Game_Init(void)
     g.upgrades[5].cost = 150;
     g.upgrades[5].upgradeLevel = 0;
 
-    // Load dummy texture (1 pixel white)
     Image img = GenImageColor(1, 1, WHITE);
     g.dummyTex = LoadTextureFromImage(img);
     UnloadImage(img);
@@ -51,7 +55,6 @@ void Game_Init(void)
 
 void Game_Reset(void)
 {
-    // Reset all entities
     for (int i = 0; i < MAX_BULLETS; i++)
         g.bullets[i].active = false;
     for (int i = 0; i < MAX_ENEMIES; i++)
@@ -72,28 +75,110 @@ void Game_Reset(void)
     Story_Init();
 }
 
+void Game_SaveState(void)
+{
+    // Ensure saves directory exists
+    // On most systems this will work; if not, save silently fails
+    GameSave save;
+    memset(&save, 0, sizeof(GameSave));
+    save.valid = true;
+    save.mode = g.mode;
+    save.difficulty = g.difficulty;
+    save.currentWave = g.wave.currentWave;
+    save.score = g.player.score;
+    save.killCount = g.player.killCount;
+    save.energyFragments = g.player.energyFragments;
+    save.hp = g.player.hp;
+    save.maxHp = g.player.maxHp;
+    save.shield = g.player.shield;
+    save.maxShield = g.player.maxShield;
+    save.weaponLevel = g.player.weaponLevel;
+    save.missiles = g.player.missiles;
+    save.laserBeams = g.player.laserBeams;
+    save.soundwaves = g.player.soundwaves;
+    save.hasDrone = g.player.hasDrone;
+    save.gameTime = g.gameTime;
+    for (int i = 0; i < 6; i++)
+        save.upgradeLevels[i] = g.upgrades[i].upgradeLevel;
+
+    FILE *f = fopen(SAVE_FILE, "wb");
+    if (f)
+    {
+        fwrite(&save, sizeof(GameSave), 1, f);
+        fclose(f);
+    }
+
+    // Update save flags
+    if (g.mode == GAME_MODE_SURVIVAL)
+        g.save.survivalSaveExists = true;
+}
+
+bool Game_LoadState(void)
+{
+    FILE *f = fopen(SAVE_FILE, "rb");
+    if (!f) return false;
+
+    GameSave save;
+    if (fread(&save, sizeof(GameSave), 1, f) != 1)
+    {
+        fclose(f);
+        return false;
+    }
+    fclose(f);
+
+    if (!save.valid) return false;
+
+    g.gameSave = save;
+    return true;
+}
+
+void Game_DeleteSave(void)
+{
+    remove(SAVE_FILE);
+    g.save.survivalSaveExists = false;
+}
+
 static void SetDifficulty(Difficulty d)
 {
     g.difficulty = d;
     switch (d)
     {
-        case DIFFICULTY_EASY:
-            g.difficultyMult = 0.6f;
-            break;
-        case DIFFICULTY_NORMAL:
-            g.difficultyMult = 1.0f;
-            break;
-        case DIFFICULTY_HARD:
-            g.difficultyMult = 1.5f;
-            break;
+        case DIFFICULTY_EASY:   g.difficultyMult = 0.6f; break;
+        case DIFFICULTY_NORMAL: g.difficultyMult = 1.0f; break;
+        case DIFFICULTY_HARD:   g.difficultyMult = 1.5f; break;
     }
+}
+
+void ApplyGameSave(void)
+{
+    GameSave *s = &g.gameSave;
+    if (!s->valid) return;
+
+    g.mode = s->mode;
+    SetDifficulty(s->difficulty);
+    g.player.score = s->score;
+    g.player.killCount = s->killCount;
+    g.player.energyFragments = s->energyFragments;
+    g.player.hp = s->hp;
+    g.player.maxHp = s->maxHp;
+    g.player.shield = s->shield;
+    g.player.maxShield = s->maxShield;
+    g.player.weaponLevel = s->weaponLevel;
+    g.player.missiles = s->missiles;
+    g.player.laserBeams = s->laserBeams;
+    g.player.soundwaves = s->soundwaves;
+    g.player.hasDrone = s->hasDrone;
+    g.gameTime = s->gameTime;
+    for (int i = 0; i < 6; i++)
+        g.upgrades[i].upgradeLevel = s->upgradeLevels[i];
+
+    Level_StartWave(s->currentWave);
 }
 
 void Game_Update(float dt)
 {
     g.gameTime += dt;
 
-    // Update starfield always
     Starfield_Update(dt);
 
     if (g.screenShake > 0)
@@ -107,7 +192,6 @@ void Game_Update(float dt)
         {
             UI_HandleMenuInput();
 
-            // Difficulty selection via number keys
             if (IsKeyPressed(KEY_ONE))
                 SetDifficulty(DIFFICULTY_EASY);
             if (IsKeyPressed(KEY_TWO))
@@ -118,6 +202,7 @@ void Game_Update(float dt)
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
             {
                 Game_Reset();
+                g.mode = GAME_MODE_CAMPAIGN;
                 g.state = GAME_STATE_STORY;
                 g.storyTimer = 0;
             }
@@ -135,6 +220,59 @@ void Game_Update(float dt)
                 g.state = GAME_STATE_PLAYING;
                 Level_StartWave(1);
             }
+            break;
+        }
+
+        case GAME_STATE_DASHBOARD:
+        {
+            // Dashboard handled in UI - keyboard shortcuts
+            if (IsKeyPressed(KEY_R))
+            {
+                // Resume game
+                g.state = GAME_STATE_PLAYING;
+            }
+            if (IsKeyPressed(KEY_S))
+            {
+                // Save & Exit
+                Game_SaveState();
+                g.state = GAME_STATE_MENU;
+            }
+            if (IsKeyPressed(KEY_Q))
+            {
+                // Quit to menu without saving
+                g.state = GAME_STATE_MENU;
+            }
+            break;
+        }
+
+        case GAME_STATE_LEVEL_SELECT:
+        {
+            // Level select handled in UI
+            if (IsKeyPressed(KEY_ESCAPE))
+                g.state = GAME_STATE_MENU;
+            break;
+        }
+
+        case GAME_STATE_SURVIVAL_MENU:
+        {
+            if (IsKeyPressed(KEY_N))
+            {
+                Game_Reset();
+                g.mode = GAME_MODE_SURVIVAL;
+                g.state = GAME_STATE_PLAYING;
+                Level_StartWave(1);
+            }
+            if (IsKeyPressed(KEY_C))
+            {
+                if (Game_LoadState() && g.gameSave.mode == GAME_MODE_SURVIVAL)
+                {
+                    Game_Reset();
+                    ApplyGameSave();
+                    g.state = GAME_STATE_PLAYING;
+                }
+            }
+            if (IsKeyPressed(KEY_ESCAPE))
+                g.state = GAME_STATE_MENU;
             break;
         }
 
@@ -159,10 +297,8 @@ void Game_Update(float dt)
 
         case GAME_STATE_PLAYING:
         {
-            // Handle special weapon selection (Q key or touch button)
             if (IsKeyPressed(KEY_Q))
             {
-                // Cycle through available special weapons
                 if (g.player.missiles > 0 || g.player.laserBeams > 0 || g.player.soundwaves > 0)
                 {
                     do {
@@ -178,23 +314,18 @@ void Game_Update(float dt)
                 }
             }
 
-            // Handle special weapon fire (E key or touch button)
             g.specialFirePressed = IsKeyPressed(KEY_E);
 
-            // Update player
             Player_Update(&g.player, dt);
 
-            // Auto-fire primary weapon if holding fire button
             if (g.firePressed)
                 Weapon_Fire(&g.player, g.bullets, dt);
 
-            // Fire special weapon if requested
             if (g.specialFirePressed && g.player.selectedSpecial != SPECIAL_NONE)
             {
                 Weapon_FireSpecial(&g.player);
             }
 
-            // Update entities
             Bullet_UpdateAll(dt);
             for (int i = 0; i < MAX_ENEMIES; i++)
                 if (g.enemies[i].active)
@@ -202,13 +333,10 @@ void Game_Update(float dt)
             PowerUp_UpdateAll(dt);
             Particle_UpdateAll(dt);
 
-            // Collision detection
             Collision_CheckAll();
 
-            // Level/wave management
             Level_Update(dt);
 
-            // Check game over
             if (g.player.hp <= 0)
             {
                 g.state = GAME_STATE_GAMEOVER;
@@ -217,7 +345,6 @@ void Game_Update(float dt)
                     g.save.highScore = g.player.score;
             }
 
-            // Win condition - campaign complete
             if (g.mode == GAME_MODE_CAMPAIGN && g.wave.currentWave > 10)
             {
                 g.state = GAME_STATE_WIN;
@@ -244,6 +371,8 @@ void Game_Update(float dt)
         case GAME_STATE_WIN:
         {
             g.save.unlockedBossRush = true;
+            if (g.mode == GAME_MODE_CAMPAIGN && g.wave.currentWave > g.save.unlockedLevel)
+                g.save.unlockedLevel = g.wave.currentWave;
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
                 g.state = GAME_STATE_MENU;
             break;
@@ -295,6 +424,18 @@ void Game_Draw(void)
             UI_DrawMainMenu();
             break;
 
+        case GAME_STATE_DASHBOARD:
+            UI_DrawDashboard();
+            break;
+
+        case GAME_STATE_LEVEL_SELECT:
+            UI_DrawLevelSelect();
+            break;
+
+        case GAME_STATE_SURVIVAL_MENU:
+            UI_DrawSurvivalMenu();
+            break;
+
         case GAME_STATE_STORY:
             Starfield_Draw();
             Story_Init();
@@ -322,7 +463,6 @@ void Game_Draw(void)
 
             Player_Draw(&g.player);
 
-            // Drone companion
             if (g.player.hasDrone)
             {
                 float dx = cosf(g.player.droneAngle) * 30;

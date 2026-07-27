@@ -7,6 +7,7 @@
 #include <math.h>
 #include <string.h>
 #include <time.h>
+#include <stdio.h>
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -24,6 +25,8 @@
 #define MAX_STORY_LINES     5
 #define MAX_SAVE_SLOTS      3
 #define FPS                 60
+#define MAX_LEVELS          10
+#define SAVE_FILE           "saves/game_save.dat"
 
 // Game areas
 #define PLAY_AREA_TOP       60.0f
@@ -49,6 +52,9 @@
 
 typedef enum {
     GAME_STATE_MENU,
+    GAME_STATE_DASHBOARD,
+    GAME_STATE_LEVEL_SELECT,
+    GAME_STATE_SURVIVAL_MENU,
     GAME_STATE_PLAYING,
     GAME_STATE_PAUSED,
     GAME_STATE_GAMEOVER,
@@ -80,13 +86,13 @@ typedef enum {
 } EnemyType;
 
 typedef enum {
-    POWERUP_ENERGY,       // Universal currency
+    POWERUP_ENERGY,
     POWERUP_HEALTH,
     POWERUP_SHIELD,
     POWERUP_SPEED_BOOST,
     POWERUP_DRONE,
     POWERUP_SPECIAL,
-    POWERUP_MISSILE,      // Special weapon ammo
+    POWERUP_MISSILE,
     POWERUP_LASER_BEAM,
     POWERUP_SOUNDWAVE
 } PowerUpType;
@@ -141,7 +147,7 @@ typedef struct {
     bool hasShield;
     float shieldHP;
     float phaseTimer;
-    int phase;               // For boss patterns
+    int phase;
     Color tint;
 } Enemy;
 
@@ -152,7 +158,7 @@ typedef struct {
     bool active;
     int lifetime;
     Color color;
-    int value;               // For energy crystals
+    int value;
     PowerUpType type;
 } PowerUp;
 
@@ -164,14 +170,14 @@ typedef struct {
     int lifetime;
     int maxLifetime;
     bool active;
-    bool gravity;           // Some particles fall
+    bool gravity;
 } Particle;
 
 typedef struct {
     Vector2 pos;
     float radius;
     Color color;
-    float brightness;        // Twinkle effect
+    float brightness;
     float phase;
 } Star;
 
@@ -199,7 +205,6 @@ typedef struct {
     int lives;
     TrailPoint trail[12];
     int trailIndex;
-    // Special weapon ammo
     int missiles;
     int laserBeams;
     int soundwaves;
@@ -244,7 +249,31 @@ typedef struct {
     int speedLevel;
     int droneLevel;
     bool unlockedBossRush;
+    int unlockedLevel;       // Highest campaign level unlocked
+    bool survivalSaveExists; // Whether survival save exists
 } SaveData;
+
+// Persistent save for in-progress game
+typedef struct {
+    bool valid;
+    GameMode mode;
+    Difficulty difficulty;
+    int currentWave;
+    int score;
+    int killCount;
+    int energyFragments;
+    int hp;
+    int maxHp;
+    float shield;
+    float maxShield;
+    WeaponLevel weaponLevel;
+    int missiles;
+    int laserBeams;
+    int soundwaves;
+    int upgradeLevels[6];
+    bool hasDrone;
+    float gameTime;
+} GameSave;
 
 // ---------------------------------------------------------------------------
 // Game Globals (extern)
@@ -267,7 +296,7 @@ typedef struct {
     float storyTimer;
     float screenShake;
     float gameTime;
-    float difficultyMult;    // Multiplier from difficulty selection
+    float difficultyMult;
     Rectangle screenRect;
     bool firePressed;
     bool specialFirePressed;
@@ -278,7 +307,8 @@ typedef struct {
     float comboDisplayTimer;
     int comboCount;
     SaveData save;
-    Texture2D dummyTex;  // fallback texture for procedural shapes
+    GameSave gameSave;
+    Texture2D dummyTex;
 } GameData;
 
 extern GameData g;
@@ -293,6 +323,10 @@ void Game_Update(float dt);
 void Game_Draw(void);
 void Game_Shutdown(void);
 void Game_Reset(void);
+void Game_SaveState(void);
+bool Game_LoadState(void);
+void Game_DeleteSave(void);
+void ApplyGameSave(void);
 
 // player.c
 void Player_Init(Player *p);
@@ -358,6 +392,9 @@ void Audio_Shutdown(void);
 
 // ui.c
 void UI_DrawMainMenu(void);
+void UI_DrawDashboard(void);
+void UI_DrawLevelSelect(void);
+void UI_DrawSurvivalMenu(void);
 void UI_DrawHUD(void);
 void UI_DrawPauseMenu(void);
 void UI_DrawGameOver(void);
