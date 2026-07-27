@@ -1,0 +1,42 @@
+# Build directories
+build/
+cmake-build-*/
+out/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+CMakeScripts/
+
+# macOS
+*.app
+*.dSYM/
+.DS_Store
+
+# Compiled objects
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.lib
+*.dylib
+*.so
+
+# Save data
+saves/
+
+# Assets (placeholder - uncomment if you add real assets)
+# assets/sprites/
+# assets/sounds/
+# assets/music/
