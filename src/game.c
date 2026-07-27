@@ -1,4 +1,24 @@
 #include "game.h"
+#include <sys/stat.h>
+#include <sys/types.h>
+
+static char savePath[512] = SAVE_FILE;
+
+static void InitSavePath(void)
+{
+    // Get the directory where the executable is located
+    const char *appDir = GetApplicationDirectory();
+    snprintf(savePath, sizeof(savePath), "%ssaves/game_save.dat", appDir);
+
+    // Create saves directory if it doesn't exist
+    struct stat st = {0};
+    if (stat(savePath, &st) == -1)
+    {
+        char dirPath[512];
+        snprintf(dirPath, sizeof(dirPath), "%ssaves", appDir);
+        mkdir(dirPath, 0755);
+    }
+}
 
 void Game_Init(void)
 {
@@ -12,6 +32,8 @@ void Game_Init(void)
     g.save.unlockedLevel = 1;
     g.save.unlockedBossRush = false;
     g.save.survivalSaveExists = false;
+
+    InitSavePath();
 
     Player_Init(&g.player);
     Level_Init();
@@ -97,7 +119,7 @@ void Game_SaveState(void)
     for (int i = 0; i < 6; i++)
         save.upgradeLevels[i] = g.upgrades[i].upgradeLevel;
 
-    FILE *f = fopen(SAVE_FILE, "wb");
+    FILE *f = fopen(savePath, "wb");
     if (f)
     {
         fwrite(&save, sizeof(GameSave), 1, f);
@@ -110,7 +132,7 @@ void Game_SaveState(void)
 
 bool Game_LoadState(void)
 {
-    FILE *f = fopen(SAVE_FILE, "rb");
+    FILE *f = fopen(savePath, "rb");
     if (!f) return false;
 
     GameSave save;
@@ -129,7 +151,7 @@ bool Game_LoadState(void)
 
 void Game_DeleteSave(void)
 {
-    remove(SAVE_FILE);
+    remove(savePath);
     g.save.survivalSaveExists = false;
 }
 
