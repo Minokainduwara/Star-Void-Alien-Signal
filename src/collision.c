@@ -78,6 +78,32 @@ void Collision_CheckAll(void)
         }
     }
 
+    // Bullet vs bullet: player bullets destroy enemy bullets
+    for (int i = 0; i < MAX_BULLETS; i++)
+    {
+        if (!g.bullets[i].active) continue;
+        if (g.bullets[i].type != BULLET_PLAYER && g.bullets[i].type != BULLET_BEAM &&
+            g.bullets[i].type != BULLET_MISSILE) continue;
+        if (g.bullets[i].damage <= 0) continue;
+
+        for (int k = 0; k < MAX_BULLETS; k++)
+        {
+            if (!g.bullets[k].active) continue;
+            if (g.bullets[k].type != BULLET_ENEMY) continue;
+            if (i == k) continue;
+
+            if (Collision_CircleCircle(g.bullets[i].pos, g.bullets[i].radius,
+                                       g.bullets[k].pos, g.bullets[k].radius))
+            {
+                // Both bullets destroy each other
+                g.bullets[i].active = false;
+                g.bullets[k].active = false;
+                Particle_SpawnBurst(g.bullets[i].pos, 6, (Color){255, 200, 100, 200}, 120);
+                break;
+            }
+        }
+    }
+
     // Enemy bullets vs player
     for (int i = 0; i < MAX_BULLETS; i++)
     {
